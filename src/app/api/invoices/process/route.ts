@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GoogleGenAI } from '@google/genai'
 
+export const maxDuration = 60
+
 const PROMPT = `Loe sellelt arvelt andmed ja tagasta AINULT JSON, mitte muud teksti:
 {
   "hankija": "müüja/hankija ettevõtte nimi",
