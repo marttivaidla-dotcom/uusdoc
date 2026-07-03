@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
     const ai = new GoogleGenAI({ apiKey })
     const result = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
+      config: { thinkingConfig: { thinkingBudget: 0 } },
       contents: [{
         role: 'user',
         parts: [
