@@ -63,12 +63,19 @@ function InvoicesContent() {
 
   const processFile = async (file: File) => {
     setUploading(true)
-    const form = new FormData()
-    form.append('file', file)
-    const res = await fetch('/api/invoices/process', { method: 'POST', body: form })
-    const data = await res.json()
+    let data: any
+    try {
+      const form = new FormData()
+      form.append('file', file)
+      const res = await fetch('/api/invoices/process', { method: 'POST', body: form })
+      data = await res.json()
+    } catch (err: any) {
+      setUploading(false)
+      showMsg('Viga: ' + (err?.message || 'Timeout või võrgu viga'))
+      return
+    }
     setUploading(false)
-    if (data.error) { showMsg('Viga: ' + data.error); return }
+    if (data.error) { showMsg('Viga: ' + data.error + (data.code ? ` (${data.code})` : '')); return }
     setDrafts(prev => [...prev, {
       company_id: selectedCompany,
       hankija: data.data.hankija || '',

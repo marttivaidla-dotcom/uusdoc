@@ -46,7 +46,6 @@ export async function POST(req: NextRequest) {
               { text: PROMPT },
             ],
           }],
-          generationConfig: { thinkingConfig: { thinkingBudget: 0 } },
         }),
       }
     )
