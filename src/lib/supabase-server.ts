@@ -1,8 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 
 function env(name: string) {
-  const v = process.env[name] ?? ''
-  // Eemalda UTF-16 BOM kui PowerShell lisas selle env muutujasse
+  const v = (process.env[name] ?? '').trim()
   return v.charCodeAt(0) === 0xFEFF ? v.slice(1) : v
 }
 
