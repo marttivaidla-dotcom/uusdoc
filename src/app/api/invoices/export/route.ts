@@ -19,13 +19,17 @@ export async function GET(req: NextRequest) {
   const admin = createSupabaseAdmin()
   let q = admin
     .from('invoices')
-    .select('*, companies(nimi, jarjekorra_nr)')
+    .select('*, companies(nimi, jarjekorra_nr, acc_number, vat_code)')
     .eq('user_id', user.id)
     .order('arve_kuupaev', { ascending: true })
   if (companyId) q = q.eq('company_id', companyId)
 
   const { data: invoices, error } = await q
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  if (fmt === 'books') {
+    return exportBooks(invoices || [], companyId)
+  }
 
   const sep = ';'
   const headers = ['Järjek nr', 'Kuupäev', 'Arve nr', 'Hankija', 'Ettevõte', 'KM-ta', 'KM', 'Kokku', 'Tähtaeg', 'Staatus']
@@ -49,12 +53,55 @@ export async function GET(req: NextRequest) {
   })
 
   const content = [headers.join(sep), ...rows].join('\r\n')
-  const bom = '﻿' // UTF-8 BOM Excel jaoks
+  const bom = '﻿'
 
   return new NextResponse(bom + content, {
     headers: {
       'Content-Type': fmt === 'txt' ? 'text/plain; charset=utf-8' : 'text/csv; charset=utf-8',
       'Content-Disposition': `attachment; filename="arved.${fmt}"`,
+    },
+  })
+}
+
+function exportBooks(invoices: any[], companyId: string | null) {
+  const company = invoices[0]?.companies
+  const compnr = company?.jarjekorra_nr || '1'
+
+  const header = [
+    `compnr\t${compnr}`,
+    'format',
+    '1\t46\t1\t0\t1\t0',
+    '',
+    'codepage\tUTF-8',
+  ].join('\r\n')
+
+  const rows = invoices.map((inv, i) => {
+    const summa = inv.summa ?? 0
+    const km = inv.km ?? 0
+    const neto = (summa - km).toFixed(2)
+    const accNumber = inv.companies?.acc_number || ''
+    const vatCode = inv.companies?.vat_code || ''
+    const comment = [inv.hankija, inv.arve_nr].filter(Boolean).join(' ')
+    const fields = [
+      String(i + 1),   // SerNr
+      accNumber,        // AccNumber
+      comment,          // Comment
+      '',               // Objects
+      '',               // Item
+      '1',              // qty
+      neto,             // Sum
+      vatCode,          // VATCode
+      '',               // PRCode
+    ]
+    return fields.join('\t')
+  })
+
+  const content = header + '\r\n\r\n\r\nVIVc\r\n' + rows.join('\r\n\r\n')
+
+  return new NextResponse(content, {
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Content-Disposition': 'attachment; filename="arved_books.txt"',
     },
   })
 }

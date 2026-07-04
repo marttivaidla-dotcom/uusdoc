@@ -137,7 +137,7 @@ function InvoicesContent() {
     setInvoices(prev => prev.filter(i => i.id !== id))
   }
 
-  const exportInvoices = (fmt: 'csv' | 'txt') => {
+  const exportInvoices = (fmt: 'csv' | 'txt' | 'books') => {
     const url = `/api/invoices/export?fmt=${fmt}${selectedCompany ? `&company_id=${selectedCompany}` : ''}`
     window.open(url, '_blank')
   }
@@ -160,6 +160,9 @@ function InvoicesContent() {
           </button>
           <button onClick={() => exportInvoices('txt')} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 14px', background: '#fff', border: '1px solid #e9ebed', borderRadius: '7px', cursor: 'pointer', fontSize: '13px', color: '#4a5568', fontWeight: '500' }}>
             <DownloadSimpleIcon size={15} />TXT
+          </button>
+          <button onClick={() => exportInvoices('books')} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 14px', background: '#f0f4ff', border: '1px solid #c7d2fe', borderRadius: '7px', cursor: 'pointer', fontSize: '13px', color: '#3b5bdb', fontWeight: '600' }}>
+            <DownloadSimpleIcon size={15} />Excellent Books
           </button>
         </div>
       </div>

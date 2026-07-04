@@ -5,7 +5,7 @@ import Layout from '@/components/Layout'
 import { BuildingsIcon, PlusIcon, TrashIcon, CloudArrowUpIcon, CheckCircleIcon, WarningIcon, MagnifyingGlassIcon } from '@phosphor-icons/react'
 import { Suspense } from 'react'
 
-type Company = { id: string; nimi: string; registrikood: string | null; onedrive_url: string | null; jarjekorra_nr: string | null }
+type Company = { id: string; nimi: string; registrikood: string | null; onedrive_url: string | null; jarjekorra_nr: string | null; acc_number: string | null; vat_code: string | null }
 type AriResult = { nimi: string; registrikood: string | null }
 
 const inputStyle = {
@@ -28,6 +28,8 @@ function CompaniesContent() {
   const [odUrl, setOdUrl] = useState('')
   const [editingJnr, setEditingJnr] = useState<string | null>(null)
   const [jnrValue, setJnrValue] = useState('')
+  const [editingField, setEditingField] = useState<{ id: string; field: 'acc_number' | 'vat_code' } | null>(null)
+  const [fieldValue, setFieldValue] = useState('')
 
   // Äriregistri otsing
   const [searchQuery, setSearchQuery] = useState('')
@@ -54,6 +56,16 @@ function CompaniesContent() {
     if (data.error) setMessage('Viga laadimisel: ' + data.error)
     setCompanies(data.companies || [])
     setLoading(false)
+  }
+
+  const saveField = async (id: string, field: 'acc_number' | 'vat_code') => {
+    await fetch(`/api/companies/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [field]: fieldValue.trim() || null }),
+    })
+    setCompanies(prev => prev.map(c => c.id === id ? { ...c, [field]: fieldValue.trim() || null } : c))
+    setEditingField(null)
   }
 
   const saveJnr = async (id: string) => {
@@ -260,6 +272,33 @@ function CompaniesContent() {
                       </span>
                     )}
                   </div>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' as const, marginBottom: '10px' }}>
+                    {(['acc_number', 'vat_code'] as const).map(field => (
+                      editingField?.id === c.id && editingField.field === field ? (
+                        <div key={field} style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                          <input
+                            value={fieldValue}
+                            onChange={e => setFieldValue(e.target.value)}
+                            placeholder={field === 'acc_number' ? 'Konto nr' : 'KM kood'}
+                            autoFocus
+                            style={{ width: '100px', padding: '4px 8px', border: '1px solid #e9ebed', borderRadius: '6px', fontSize: '13px', outline: 'none' }}
+                          />
+                          <button onClick={() => saveField(c.id, field)} style={{ padding: '4px 10px', background: '#3b5bdb', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}>OK</button>
+                          <button onClick={() => setEditingField(null)} style={{ padding: '4px 8px', background: '#f8f9fb', border: '1px solid #e9ebed', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', color: '#718096' }}>×</button>
+                        </div>
+                      ) : (
+                        <span
+                          key={field}
+                          onClick={() => { setEditingField({ id: c.id, field }); setFieldValue(c[field] || '') }}
+                          style={{ fontSize: '12px', color: c[field] ? '#2d6a4f' : '#cbd5e0', cursor: 'pointer', border: '1px dashed', borderColor: c[field] ? '#b7e4c7' : '#e9ebed', borderRadius: '5px', padding: '2px 8px', background: c[field] ? '#f0fff4' : 'transparent' }}
+                          title={field === 'acc_number' ? 'Konto number' : 'KM kood'}
+                        >
+                          {field === 'acc_number' ? '🏦 ' : '📊 '}{c[field] || (field === 'acc_number' ? 'konto?' : 'KM?')}
+                        </span>
+                      )
+                    ))}
+                  </div>
+
                   {editingOd === c.id ? (
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                       <input
