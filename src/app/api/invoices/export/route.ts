@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   const admin = createSupabaseAdmin()
   let q = admin
     .from('invoices')
-    .select('*, companies(nimi)')
+    .select('*, companies(nimi, jarjekorra_nr)')
     .eq('user_id', user.id)
     .order('arve_kuupaev', { ascending: true })
   if (companyId) q = q.eq('company_id', companyId)
@@ -28,13 +28,14 @@ export async function GET(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   const sep = ';'
-  const headers = ['Kuupäev', 'Arve nr', 'Hankija', 'Ettevõte', 'KM-ta', 'KM', 'Kokku', 'Tähtaeg', 'Staatus']
+  const headers = ['Järjek nr', 'Kuupäev', 'Arve nr', 'Hankija', 'Ettevõte', 'KM-ta', 'KM', 'Kokku', 'Tähtaeg', 'Staatus']
 
   const rows = (invoices || []).map(inv => {
     const summa = inv.summa ?? 0
     const km = inv.km ?? 0
     const neto = (summa - km).toFixed(2)
     return [
+      inv.companies?.jarjekorra_nr || '',
       inv.arve_kuupaev || '',
       inv.arve_nr || '',
       inv.hankija || '',

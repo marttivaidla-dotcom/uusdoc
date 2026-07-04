@@ -5,7 +5,7 @@ import Layout from '@/components/Layout'
 import { BuildingsIcon, PlusIcon, TrashIcon, CloudArrowUpIcon, CheckCircleIcon, WarningIcon, MagnifyingGlassIcon } from '@phosphor-icons/react'
 import { Suspense } from 'react'
 
-type Company = { id: string; nimi: string; registrikood: string | null; onedrive_url: string | null }
+type Company = { id: string; nimi: string; registrikood: string | null; onedrive_url: string | null; jarjekorra_nr: string | null }
 type AriResult = { nimi: string; registrikood: string | null }
 
 const inputStyle = {
@@ -26,6 +26,8 @@ function CompaniesContent() {
   const [message, setMessage] = useState('')
   const [editingOd, setEditingOd] = useState<string | null>(null)
   const [odUrl, setOdUrl] = useState('')
+  const [editingJnr, setEditingJnr] = useState<string | null>(null)
+  const [jnrValue, setJnrValue] = useState('')
 
   // Äriregistri otsing
   const [searchQuery, setSearchQuery] = useState('')
@@ -52,6 +54,16 @@ function CompaniesContent() {
     if (data.error) setMessage('Viga laadimisel: ' + data.error)
     setCompanies(data.companies || [])
     setLoading(false)
+  }
+
+  const saveJnr = async (id: string) => {
+    await fetch(`/api/companies/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jarjekorra_nr: jnrValue.trim() || null }),
+    })
+    setCompanies(prev => prev.map(c => c.id === id ? { ...c, jarjekorra_nr: jnrValue.trim() || null } : c))
+    setEditingJnr(null)
   }
 
   const saveOdUrl = async (id: string) => {
@@ -226,6 +238,27 @@ function CompaniesContent() {
                     <BuildingsIcon size={18} color="#3b5bdb" weight="duotone" />
                     <span style={{ fontSize: '15px', fontWeight: '700', color: '#1a1a2e' }}>{c.nimi}</span>
                     {c.registrikood && <span style={{ fontSize: '12px', color: '#9aa5b4' }}>{c.registrikood}</span>}
+                    {editingJnr === c.id ? (
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        <input
+                          value={jnrValue}
+                          onChange={e => setJnrValue(e.target.value)}
+                          placeholder="nr"
+                          autoFocus
+                          style={{ width: '80px', padding: '4px 8px', border: '1px solid #e9ebed', borderRadius: '6px', fontSize: '13px', outline: 'none' }}
+                        />
+                        <button onClick={() => saveJnr(c.id)} style={{ padding: '4px 10px', background: '#3b5bdb', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}>OK</button>
+                        <button onClick={() => setEditingJnr(null)} style={{ padding: '4px 8px', background: '#f8f9fb', border: '1px solid #e9ebed', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', color: '#718096' }}>×</button>
+                      </div>
+                    ) : (
+                      <span
+                        onClick={() => { setEditingJnr(c.id); setJnrValue(c.jarjekorra_nr || '') }}
+                        style={{ fontSize: '12px', color: c.jarjekorra_nr ? '#3b5bdb' : '#cbd5e0', cursor: 'pointer', border: '1px dashed', borderColor: c.jarjekorra_nr ? '#c7d2fe' : '#e9ebed', borderRadius: '5px', padding: '2px 8px' }}
+                        title="Kliki järjekorra numbri muutmiseks"
+                      >
+                        {c.jarjekorra_nr || 'nr?'}
+                      </span>
+                    )}
                   </div>
                   {editingOd === c.id ? (
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
