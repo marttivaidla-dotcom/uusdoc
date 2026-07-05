@@ -70,15 +70,18 @@ function exportBooks(invoices: any[], companyId: string | null) {
   const header = [
     `compnr\t${compnr}`,
     'format',
-    '1\t46\t1\t0\t1\t0',
+    '1\t46\t1\t0\t1\t44',
     '',
     'codepage\tUTF-8',
   ].join('\r\n')
 
+  const formatNum = (n: number) =>
+    n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
   const rows = invoices.map((inv, i) => {
     const summa = inv.summa ?? 0
     const km = inv.km ?? 0
-    const neto = (summa - km).toFixed(2)
+    const neto = formatNum(summa - km)
     const accNumber = inv.companies?.acc_number || ''
     const vatCode = inv.companies?.vat_code || ''
     const comment = [inv.hankija, inv.arve_nr].filter(Boolean).join(' ')
